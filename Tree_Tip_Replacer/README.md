@@ -2,7 +2,7 @@
 
 Using a tab-delimited translation table, convert tip labels for [Newick](http://evolution.genetics.washington.edu/phylip/newicktree.html) formatted trees. 
 
-### Example calls: 
+### Example call: 
     perl tree_tip_replacer.pl [translation_file] [treefile] 
 
 The translation file is a tab-delimited file with the format:  
