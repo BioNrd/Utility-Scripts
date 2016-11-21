@@ -1,0 +1,6 @@
+./HPCC/locus1_OUT/aln.part
+./HPCC/locus1_OUT/analysis
+./HPCC/locus1_OUT/locus1.phylip-relaxed
+./HPCC/locus1_OUT/locus1.phylip-relaxed.reduced
+./HPCC/locus1_OUT/log.txt
+./HPCC/locus1_OUT/partition_finder.cfg

@@ -1,0 +1,3 @@
+/boots/locus1/RAxML_bootstrap.Multiplestarts
+/boots/locus2/RAxML_bootstrap.Multiplestarts
+/boots/locus3/RAxML_bootstrap.Multiplestarts
