@@ -31,7 +31,7 @@ while (<INPUT>) {
 foreach (<TREEFILE>) {
     $line = $_;
     foreach $name (sort keys %nammer) {
-        $line =~ s/$name/$nammer{$name}/g;
+        $line =~ s/\b$name\b/$nammer{$name}/g;
     }
     print PRINTOUT "$line";
 }
