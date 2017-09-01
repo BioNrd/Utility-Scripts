@@ -15,7 +15,7 @@ Run from directory with tree files.
 
 
 ## phyluce\_pipeline\_local.sh
-Wrapper shell scripts for automating the entire Phyluce pipeline into one command.  
+Wrapper shell script for automating the entire Phyluce pipeline into one command.  
 
 Script tells you what you need to run it, but a working knowledge of how to run Phyluce is helpful. 
 
