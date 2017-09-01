@@ -12,7 +12,7 @@ Where 'Infile' is the logfile produced by `phyluce_assembly_match_contigs_to_pro
 This script searches a directory of Garli best tree files, and finds the one with the maximum likelihood. 
 
 Run from directory with tree files. 
-<<<<<<< HEAD
+
 
 ## phyluce\_pipeline\_local.sh
 Wrapper shell scripts for automating the entire Phyluce pipeline into one command.  
@@ -21,5 +21,5 @@ Script tells you what you need to run it, but a working knowledge of how to run 
 
 I've tested a version of this script on a cluster, but never a local machine. Should work though. If you try it and their are problems, let me know. If you are interested in adapting the cluster version to your particular cluster, let me know and I can send you that version too. 
 
-=======
->>>>>>> 6b8c93e48b440c0fce0880cd8b72b7c957155686
+
+
