@@ -1,14 +1,18 @@
 #!/bin/sh
 
-#Sequential running of Phyluce pipeline for use on local machine.
+#Sequential running of Phyluce pipeline.
 #PLEASE NOTE:::AS OF 7-5-17 NOT TESTED. THIS IS A REDUCED VERSION OF THE HYDRA SCRIPT. IT SHOULD WORK, BUT NEEDS TESTING.   
+
+### ASSUMES 6 CORES FOR RUNNING
 
 #Michael W. Lloyd
 #7-5-17
 
+module load bioinformatics/trinity/r2013_2_25
+
 me=`basename "$0"`
 
-while getopts ":i:o:f:r:w:c:n:p:t:g:h" opt; do
+while getopts ":i:o:f:r:w:c:y:n:p:t:g:d:c:h" opt; do
   case ${opt} in
     i )
       workdir_a=$OPTARG ;;
@@ -32,6 +36,10 @@ while getopts ":i:o:f:r:w:c:n:p:t:g:h" opt; do
       r1_end=$OPTARG ;;
     r )
       r2_end=$OPTARG ;;
+	d )
+      extDB_a=$OPTARG ;;
+    c )
+      extcontig_a=$OPTARG ;;    
     h )
       echo "Required arguments: 
 		-i  : path to raw_reads directory
@@ -40,11 +48,13 @@ while getopts ":i:o:f:r:w:c:n:p:t:g:h" opt; do
 		-c  : illumiprocessor configuration file path/name (see phyluce docs for formatting)
 		-f  : r1 line ending for raw read files (e.g., _L001_R1_001.fastq.gz)
 		-r  : r2 line ending for raw read files (e.g., _L001_R2_001.fastq.gz)
-		-y  : trinity configuration file path/name (see phyluce docs for formatting)
+		-y  : trinity assembly configuration file path/name (see phyluce docs for formatting)
 		-p  : probe file path/name
 		-t  : taxon configuration file path/name (see phyluce docs for formatting)
 		-g  : name of group in taxon conf file
-		-n  : number of taxa in group"
+		-n  : number of taxa in group
+		-d  : external database of other taxa (OPTIONAL)
+		-c  : location of external database contigs (OPTIONAL)"
       		exit 1 ;;
     \? )
       echo "Invalid option: $OPTARG" 1>&2 ;;
@@ -62,6 +72,12 @@ then
     exit 1
 fi
 
+if ([ -z $extDB_a ] && [ ! -z $extcontig_a ]) || ([ ! -z $extDB_a ] && [ -z $extcontig_a ]) ;
+then
+	echo "Can't specify an external database and not provide location of contigs or visa versa, flags -d/-c must be called together"
+	exit 1
+fi
+
 workdir=$(readlink -f  $workdir_a)
 outputdir=$(readlink -f  $outputdir_a)
 ucedir=$(readlink -f  $ucedir_a)
@@ -69,21 +85,28 @@ illumiconf=$(readlink -e  $illumiconf_a)
 probefile=$(readlink -e  $probefile_a)
 taxonconf=$(readlink -e  $taxonconf_a)
 trinityconf=$(readlink -e  $trinityconf_a)
+extDB=$(readlink -e  $extDB_a)
+extcontig=$(readlink -f  $extcontig_a)
 
 ### FILE CHECKS ###
 
 if [ ! -f "$illumiconf" ]; then 
-    echo "Can't find illumiprocessor configuration file $illumiconf : check if it exists."
+    echo "Can't find illumiprocessor configuration file $illumiconf : check if it exists/path."
     exit 1
 fi
 
 if [ ! -f "$probefile" ]; then 
-    echo "Can't find the probe file $probefile : check if it exists."
+    echo "Can't find the probe file $probefile : check if it exists/path."
     exit 1
 fi
 
 if [ ! -f "$taxonconf" ]; then 
-    echo "Can't find the taxon configuration file $taxonconf : check if it exists."
+    echo "Can't find the taxon configuration file $taxonconf : check if it exists/path."
+    exit 1
+fi
+
+if [ ! -f "$extDB" ]; then 
+    echo "Can't find the external database file $extDB : check if it exists/path."
     exit 1
 fi
 
@@ -104,6 +127,11 @@ fi
 
 
 ### DIRECTORY CHECKS AND CREATION ###
+
+if [ ! -d $extcontig ]; then
+    echo "Directory '$extcontig' does not exist, check specified path."
+    exit 1
+fi
 
 #check outdir existence
 if [ -d $outputdir ]; then
@@ -139,19 +167,19 @@ illumiprocessor --input $workdir \
 --config $illumiconf \
 --r1-pattern $r1_end \
 --r2-pattern $r2_end \
---cores 4 \
+--cores 6 \
 --log-path $ucedir/job_logs
 
 ##################
 # Trinity
 
 phyluce_assembly_assemblo_trinity \
-    --config $trinityconf \
-    --output $outputdir \
-    --subfolder split-adapter-quality-trimmed \
-    --clean \
-    --cores 12 \
-    --log-path log
+--config $trinityconf \
+--output $outputdir \
+--subfolder split-adapter-quality-trimmed \
+--clean \
+--cores 6 \
+--log-path log
 
 ##################################################
 #Clean up after Trinity ... 
@@ -172,6 +200,20 @@ phyluce_assembly_match_contigs_to_probes \
 --log-path $ucedir/job_logs
 
 ########
+
+if [ ! -z "$extDB" ]; then
+echo "Working on external DB version"
+
+phyluce_assembly_get_match_counts \
+--locus-db $ucedir/matched_probe_trin/probe.matches.sqlite \
+--taxon-list-config $taxonconf \
+--taxon-group '$taxongroup' \
+--output  $ucedir/incomplete_matrix/incomplete_matrix.conf \
+--incomplete-matrix \
+--extend-locus-db $extDB \
+--log-path $ucedir/job_logs
+else
+echo "Working on non-external DB version"
 phyluce_assembly_get_match_counts \
 --locus-db $ucedir/matched_probe_trin/probe.matches.sqlite \
 --taxon-list-config $taxonconf \
@@ -179,8 +221,21 @@ phyluce_assembly_get_match_counts \
 --output  $ucedir/incomplete_matrix/incomplete_matrix.conf \
 --incomplete-matrix \
 --log-path $ucedir/job_logs
+fi
 
 #######
+
+if [ ! -z "$extDB" ]; then
+phyluce_assembly_get_fastas_from_match_counts \
+--contigs $outputdir/contigs/ \
+--locus-db $ucedir/matched_probe_trin/probe.matches.sqlite \
+--match-count-output $ucedir/incomplete_matrix/incomplete_matrix.conf \
+--incomplete-matrix $ucedir/incomplete_matrix/incomplete_matrix.incomplete \
+--output $ucedir/incomplete_matrix/incomplete_matrix.fasta \
+--extend-locus-db $extDB \
+--extend-locus-contigs $extcontig \
+--log-path $ucedir/job_logs
+else
 phyluce_assembly_get_fastas_from_match_counts \
 --contigs $outputdir/contigs/ \
 --locus-db $ucedir/matched_probe_trin/probe.matches.sqlite \
@@ -188,8 +243,10 @@ phyluce_assembly_get_fastas_from_match_counts \
 --incomplete-matrix $ucedir/incomplete_matrix/incomplete_matrix.incomplete \
 --output $ucedir/incomplete_matrix/incomplete_matrix.fasta \
 --log-path $ucedir/job_logs
+fi
 
 #########
+
 phyluce_align_seqcap_align \
 --fasta $ucedir/incomplete_matrix/incomplete_matrix.fasta \
 --output $ucedir/incomplete_matrix/mafft-fasta/ \
@@ -201,6 +258,7 @@ phyluce_align_seqcap_align \
 --log-path $ucedir/job_logs
 
 #########
+
 phyluce_align_get_gblocks_trimmed_alignments_from_untrimmed \
 --alignments $ucedir/incomplete_matrix/mafft-fasta/ \
 --output $ucedir/incomplete_matrix/mafft-nexus-gblocks/ \
@@ -214,6 +272,7 @@ phyluce_align_get_gblocks_trimmed_alignments_from_untrimmed \
 --log-path $ucedir/job_logs
 
 #########
+
 phyluce_align_get_only_loci_with_min_taxa \
 --alignments $ucedir/incomplete_matrix/mafft-nexus-gblocks/ \
 --taxa $numtax \
@@ -223,6 +282,7 @@ phyluce_align_get_only_loci_with_min_taxa \
 --log-path $ucedir/job_logs
 
 #########
+
 phyluce_align_add_missing_data_designators  \
 --alignments $ucedir/incomplete_matrix/mafft-nexus-70per-taxa/ \
 --output $ucedir/incomplete_matrix/mafft-nexus-min-70per-taxa \
@@ -232,6 +292,7 @@ phyluce_align_add_missing_data_designators  \
 --log-path $ucedir/job_logs
 
 ########
+
 phyluce_align_format_nexus_files_for_raxml \
 --alignments $ucedir/incomplete_matrix/mafft-nexus-min-70per-taxa \
 --output $ucedir/incomplete_matrix/raxml/ \
@@ -239,4 +300,5 @@ phyluce_align_format_nexus_files_for_raxml \
 --log-path $ucedir/job_logs
 
 #######
-mpirun -np $NSLOTS raxmlHPC-MPI-SSE3-IB -s $ucedir/incomplete_matrix/raxml/mafft-nexus-min-70per-taxa.phylip -m GTRGAMMAI -w $ucedir/incomplete_matrix/raxml/ -n raxml_tree -f a -N 100 -p 3523423 -x 34589776
+
+mpirun -np 6 raxmlHPC-MPI-SSE3-IB -s $ucedir/incomplete_matrix/raxml/mafft-nexus-min-70per-taxa.phylip -m GTRGAMMAI -w $ucedir/incomplete_matrix/raxml/ -n raxml_tree -f a -N 100 -p 3523423 -x 34589776
