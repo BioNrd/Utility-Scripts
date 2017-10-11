@@ -21,13 +21,6 @@ Script tells you what you need to run it, but a working knowledge of how to run 
 
 I've tested a version of this script on a cluster, but never a local machine. Should work though. If you try it and their are problems, let me know. If you are interested in adapting the cluster version to your particular cluster, let me know and I can send you that version too. 
 
-## phyluce\_pipeline\_local.sh
-Wrapper shell script for automating the entire Phyluce pipeline into one command.  
-
-Script tells you what you need to run it, but a working knowledge of how to run Phyluce is helpful. 
-
-I've tested a version of this script on a cluster, but never a local machine. Should work though. If you try it and there are problems, let me know. If you are interested in adapting the cluster version to your particular cluster, let me know and I can send you that version too. 
-
 ## phyluce\_pipeline\_postmatch\_local.sh
 
 Wrapper shell script for automating the Phyluce pipeline following the `match_contigs_to_probes` step into one command. Gives the ability to run different 'taxon-groups' without having to digest the entire script.  
