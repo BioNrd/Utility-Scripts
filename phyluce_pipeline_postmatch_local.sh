@@ -65,8 +65,7 @@ fi
 ucedir=$(readlink -f  $ucedir_a)
 taxonconf=$(readlink -e  $taxonconf_a)
 outputdir=$(readlink -e  $outputdir_a)
-extDB=$(readlink -e  $extDB_a)
-extcontig=$(readlink -f  $extcontig_a)
+
 
 ### FILE CHECKS ###
 
@@ -83,7 +82,9 @@ else
    exit 1
 fi
 
-if [ ! -f "$extDB" ]; then 
+if [ ! -z "$extDB_a" ]; then 
+	extDB=$(readlink -e  $extDB_a)
+	extcontig=$(readlink -f  $extcontig_a)
     echo "Can't find the external database file $extDB : check if it exists/path."
     exit 1
 fi

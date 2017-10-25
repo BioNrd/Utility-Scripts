@@ -85,8 +85,7 @@ illumiconf=$(readlink -e  $illumiconf_a)
 probefile=$(readlink -e  $probefile_a)
 taxonconf=$(readlink -e  $taxonconf_a)
 trinityconf=$(readlink -e  $trinityconf_a)
-extDB=$(readlink -e  $extDB_a)
-extcontig=$(readlink -f  $extcontig_a)
+
 
 ### FILE CHECKS ###
 
@@ -105,7 +104,9 @@ if [ ! -f "$taxonconf" ]; then
     exit 1
 fi
 
-if [ ! -f "$extDB" ]; then 
+if [ ! -z "$extDB_a" ]; then 
+	extDB=$(readlink -e  $extDB_a)
+	extcontig=$(readlink -f  $extcontig_a)
     echo "Can't find the external database file $extDB : check if it exists/path."
     exit 1
 fi
