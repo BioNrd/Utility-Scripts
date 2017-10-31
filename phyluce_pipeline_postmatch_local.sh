@@ -14,12 +14,14 @@ module load bioinformatics/trinity/r2013_2_25
 
 me=`basename "$0"`
 
-while getopts ":w:o:n:t:g:d:c:h" opt; do
+while getopts ":w:o:n:m:t:g:d:c:h" opt; do
   case ${opt} in
     w )
       ucedir_a=$OPTARG ;;
     o )
       outputdir_a=$OPTARG ;;
+    m ) 
+      matchdb_a=$OPTARG ;;
     t ) 
       taxonconf_a=$OPTARG ;;
     g )
@@ -34,6 +36,7 @@ while getopts ":w:o:n:t:g:d:c:h" opt; do
       echo "Required arguments: 
 		-w  : working directory for phyluce output
 		-o  : directory containing contigs
+		-m  : path to probe match output directory e.g., 'matched_probe_trin'
 		-t  : taxon configuration file path/name (see phyluce docs for formatting)
 		-g  : name of group in taxon conf file
 		-n  : number of taxa in group
@@ -48,7 +51,7 @@ while getopts ":w:o:n:t:g:d:c:h" opt; do
 done
 shift $((OPTIND -1))
 
-if [ ! "$outputdir_a" ] || [ ! "$ucedir_a" ] || [ ! "$numtax" ] || [ ! "$taxonconf_a" ] || [ ! "$taxongroup" ]
+if [ ! "$outputdir_a" ] || [ ! "$ucedir_a" ] || [ ! "$numtax" ] || [ ! "$taxonconf_a" ] || [ ! "$taxongroup" ] || [ ! "$matchdb_a" ]
 then
     echo "Missing one or more arguments!!
     Script usage: ./$me -w -t -g -n -c
@@ -65,7 +68,7 @@ fi
 ucedir=$(readlink -f  $ucedir_a)
 taxonconf=$(readlink -e  $taxonconf_a)
 outputdir=$(readlink -e  $outputdir_a)
-
+matchdb=$(readlink -e  $matchdb_a)
 
 ### FILE CHECKS ###
 
@@ -104,6 +107,11 @@ if [ ! -d $outputdir ]; then
     exit 1
 fi
 
+if [ ! -d $matchdb ]; then
+    echo "Directory '$matchdb' does not exist, check specified path."
+    exit 1
+fi
+
 #check outdir existence
 if [ -d $ucedir ]; then
     echo "Directory '$ucedir' exists, putting files in there."
@@ -120,7 +128,7 @@ fi
 if [ ! -z "$extDB" ]; then
 echo "Working on external DB version"
 phyluce_assembly_get_match_counts \
---locus-db $ucedir/matched_probe_trin/probe.matches.sqlite \
+--locus-db $matchdb/probe.matches.sqlite \
 --taxon-list-config $taxonconf \
 --taxon-group '$taxongroup' \
 --output  $ucedir/incomplete_matrix/incomplete_matrix.conf \
@@ -130,7 +138,7 @@ phyluce_assembly_get_match_counts \
 else
 echo "Working on non-external DB version"
 phyluce_assembly_get_match_counts \
---locus-db $ucedir/matched_probe_trin/probe.matches.sqlite \
+--locus-db $matchdb/probe.matches.sqlite \
 --taxon-list-config $taxonconf \
 --taxon-group '$taxongroup' \
 --output  $ucedir/incomplete_matrix/incomplete_matrix.conf \
@@ -143,7 +151,7 @@ fi
 if [ ! -z "$extDB" ]; then
 phyluce_assembly_get_fastas_from_match_counts \
 --contigs $outputdir/ \
---locus-db $ucedir/matched_probe_trin/probe.matches.sqlite \
+--locus-db $matchdb/probe.matches.sqlite \
 --match-count-output $ucedir/incomplete_matrix/incomplete_matrix.conf \
 --incomplete-matrix $ucedir/incomplete_matrix/incomplete_matrix.incomplete \
 --output $ucedir/incomplete_matrix/incomplete_matrix.fasta \
@@ -153,7 +161,7 @@ phyluce_assembly_get_fastas_from_match_counts \
 else
 phyluce_assembly_get_fastas_from_match_counts \
 --contigs $outputdir/ \
---locus-db $ucedir/matched_probe_trin/probe.matches.sqlite \
+--locus-db $matchdb/probe.matches.sqlite \
 --match-count-output $ucedir/incomplete_matrix/incomplete_matrix.conf \
 --incomplete-matrix $ucedir/incomplete_matrix/incomplete_matrix.incomplete \
 --output $ucedir/incomplete_matrix/incomplete_matrix.fasta \
