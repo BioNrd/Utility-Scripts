@@ -110,7 +110,10 @@ if [ ! -d $matchdb ]; then
     exit 1
 fi
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> b9ac2b300c0838b9be4c07a4599aa4d6bd7047b1
 #check outdir existence
 if [ -d $ucedir ]; then
     echo "Directory '$ucedir' exists, putting files in there."
