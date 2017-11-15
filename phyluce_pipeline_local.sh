@@ -8,8 +8,6 @@
 #Michael W. Lloyd
 #7-5-17
 
-module load bioinformatics/trinity/r2013_2_25
-
 me=`basename "$0"`
 
 while getopts ":i:o:f:r:w:c:y:n:p:t:g:d:c:h" opt; do
