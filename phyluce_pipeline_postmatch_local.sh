@@ -86,8 +86,6 @@ fi
 if [ ! -z "$extDB_a" ]; then 
 	extDB=$(readlink -e  $extDB_a)
 	extcontig=$(readlink -f  $extcontig_a)
-    echo "Can't find the external database file $extDB : check if it exists/path."
-    exit 1
 fi
 
 ####
@@ -107,6 +105,16 @@ fi
 
 if [ ! -d $matchdb ]; then
     echo "Directory '$matchdb' does not exist, check specified path."
+    exit 1
+fi
+
+if [ ! -d "$extcontig" ]; then 
+    echo "Can't find the external database contigs $extextcontig : check if it exists/path."
+    exit 1
+fi
+
+if [ ! -f "$extDB" ]; then 
+    echo "Can't find the external database file $extDB : check if it exists/path."
     exit 1
 fi
 
