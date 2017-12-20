@@ -1,4 +1,7 @@
 #!/usr/bin/perl
+
+# Find the Garli tree with the maximum likelihood amongst N number of tree files in a directory. 
+
 use Cwd;
 use List::Util qw( min max );
 
@@ -10,29 +13,32 @@ opendir(DIR, $cwd);
 @files = readdir(DIR);
 closedir(DIR);
 
-$tracker  = 0;
+$tracker = 0;
 
 foreach $file (@files) {
-	if ($tracker) {
-		print "Can't find a likelihood score\n";
-	}    
+   
 	if($file =~ /.*\.screen.log/) {
 		print $file . "\t";
 		push @file_list, $file;
 	
 		open (BOOT_REP, "< $cwd/$file") or die "Can't open $basename/$file/job$i/stdout";
 		foreach $value (<BOOT_REP>) {
-			$tracker = 0;
+			
 			if ($value =~ /Final/) {
+				$tracker = 0;
 				chomp $value;
 				my $likelihood = substr $value, 14;  
 				push @likes, $likelihood;
 				print "$likelihood";
-				
+			} else {
+				$tracker = 1;
 			}
 		}
 		print "\n";
     	}
+    if ($tracker) {
+		#print "Can't find a likelihood score\n";
+	} 
 }
 
 #my $min = min @likes;
